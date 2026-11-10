@@ -1,0 +1,288 @@
+<!-- frontend/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Smart Blood Donor Finder</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div id="loading" class="loading" hidden>Loading&hellip;</div>
+
+<div class="app">
+    <header class="sidebar">
+        <a class="brand" href="#dashboard">
+            <svg class="brand-mark" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false">
+                <path d="M12 2C12 2 5 10.2 5 15a7 7 0 0 0 14 0C19 10.2 12 2 12 2z" fill="#B3122D"/>
+            </svg>
+            <span class="brand-name">Smart Blood Donor Finder</span>
+        </a>
+        <nav aria-label="Main">
+            <ul class="nav-list">
+                <li><a href="#dashboard" data-view="dashboard">Dashboard</a></li>
+                <li><a href="#donor-register" data-view="donor-register">Register donor</a></li>
+                <li><a href="#patient-register" data-view="patient-register">Register patient</a></li>
+                <li><a href="#donors" data-view="donors">Donors</a></li>
+                <li><a href="#patients" data-view="patients">Patients</a></li>
+                <li><a href="#search" data-view="search">Find donors</a></li>
+                <li><a href="#graph" data-view="graph">Graph</a></li>
+                <li><a href="#matching" data-view="matching">Matching</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="content">
+        <div id="banner" class="banner" role="alert" hidden>
+            <p id="banner-text" class="banner-text"></p>
+            <div class="banner-actions">
+                <button type="button" id="banner-retry" class="btn btn-small">Retry</button>
+                <button type="button" id="banner-dismiss" class="btn btn-small">Dismiss</button>
+            </div>
+        </div>
+
+        <noscript><p class="notice">This application needs JavaScript to show data from the backend.</p></noscript>
+
+        <main id="main" tabindex="-1">
+
+            <!-- A. Dashboard -->
+            <section id="view-dashboard" class="view" aria-labelledby="h-dashboard" hidden>
+                <h1 id="h-dashboard" tabindex="-1">Dashboard</h1>
+                <p class="lead">Live figures from the C backend. Connections and matching count available donors only, with no city filter.</p>
+                <ul id="stats" class="stats"></ul>
+
+                <h2>Go to</h2>
+                <div class="quick-links">
+                    <a class="btn btn-primary" href="#donor-register">Register a donor</a>
+                    <a class="btn btn-primary" href="#patient-register">Register a patient</a>
+                    <a class="btn" href="#search">Find compatible donors</a>
+                    <a class="btn" href="#graph">View graph</a>
+                    <a class="btn" href="#matching">Run matching</a>
+                </div>
+
+                <h2>Blood group distribution</h2>
+                <div id="dist-wrap"></div>
+            </section>
+
+            <!-- B. Donor registration -->
+            <section id="view-donor-register" class="view" aria-labelledby="h-donor-register" hidden>
+                <h1 id="h-donor-register" tabindex="-1">Register a donor</h1>
+                <form id="donor-form" class="form panel" novalidate>
+                    <div class="field">
+                        <label for="donor-id">Donor ID</label>
+                        <input id="donor-id" data-field="id" type="text" inputmode="numeric" autocomplete="off" aria-describedby="donor-id-hint donor-id-error">
+                        <p class="hint" id="donor-id-hint">A whole number from 1 to 2147483647 that no other donor uses.</p>
+                        <p class="field-error" id="donor-id-error" hidden></p>
+                    </div>
+                    <div class="field">
+                        <label for="donor-name">Full name</label>
+                        <input id="donor-name" data-field="name" type="text" autocomplete="off" aria-describedby="donor-name-error">
+                        <p class="field-error" id="donor-name-error" hidden></p>
+                    </div>
+                    <div class="field">
+                        <label for="donor-bg">Blood group</label>
+                        <select id="donor-bg" data-field="bloodGroup" aria-describedby="donor-bg-error"></select>
+                        <p class="field-error" id="donor-bg-error" hidden></p>
+                    </div>
+                    <div class="field">
+                        <label for="donor-city">City</label>
+                        <input id="donor-city" data-field="city" type="text" autocomplete="off" aria-describedby="donor-city-error">
+                        <p class="field-error" id="donor-city-error" hidden></p>
+                    </div>
+                    <div class="field">
+                        <label for="donor-phone">Phone</label>
+                        <input id="donor-phone" data-field="phone" type="text" inputmode="tel" autocomplete="off" aria-describedby="donor-phone-hint donor-phone-error">
+                        <p class="hint" id="donor-phone-hint">7 to 14 characters: digits, with an optional leading +.</p>
+                        <p class="field-error" id="donor-phone-error" hidden></p>
+                    </div>
+                    <div class="field">
+                        <label class="switch" for="donor-available">
+                            <input id="donor-available" data-field="available" type="checkbox" checked aria-describedby="donor-available-error">
+                            <span class="switch-track" aria-hidden="true"></span>
+                            <span class="switch-text" id="donor-available-text">Available</span>
+                        </label>
+                        <p class="hint">Only available donors appear as connections in searches and matching.</p>
+                        <p class="field-error" id="donor-available-error" hidden></p>
+                    </div>
+                    <p class="form-status" role="alert" hidden></p>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Register donor</button>
+                        <button type="reset" class="btn">Clear form</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- C. Patient registration -->
+            <section id="view-patient-register" class="view" aria-labelledby="h-patient-register" hidden>
+                <h1 id="h-patient-register" tabindex="-1">Register a patient</h1>
+                <form id="patient-form" class="form panel" novalidate>
+                    <div class="field">
+                        <label for="patient-id">Patient ID</label>
+                        <input id="patient-id" data-field="id" type="text" inputmode="numeric" autocomplete="off" aria-describedby="patient-id-hint patient-id-error">
+                        <p class="hint" id="patient-id-hint">A whole number from 1 to 2147483647 that no other patient uses.</p>
+                        <p class="field-error" id="patient-id-error" hidden></p>
+                    </div>
+                    <div class="field">
+                        <label for="patient-name">Full name</label>
+                        <input id="patient-name" data-field="name" type="text" autocomplete="off" aria-describedby="patient-name-error">
+                        <p class="field-error" id="patient-name-error" hidden></p>
+                    </div>
+                    <div class="field">
+                        <label for="patient-bg">Blood group</label>
+                        <select id="patient-bg" data-field="bloodGroup" aria-describedby="patient-bg-error"></select>
+                        <p class="field-error" id="patient-bg-error" hidden></p>
+                    </div>
+                    <div class="field">
+                        <label for="patient-city">City</label>
+                        <input id="patient-city" data-field="city" type="text" autocomplete="off" aria-describedby="patient-city-error">
+                        <p class="field-error" id="patient-city-error" hidden></p>
+                    </div>
+                    <p class="form-status" role="alert" hidden></p>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Register patient</button>
+                        <button type="reset" class="btn">Clear form</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- D. Donor directory -->
+            <section id="view-donors" class="view" aria-labelledby="h-donors" hidden>
+                <h1 id="h-donors" tabindex="-1">Donors</h1>
+                <div class="toolbar">
+                    <div class="field">
+                        <label for="donor-search">Search</label>
+                        <input id="donor-search" type="search" placeholder="Name, city, phone or ID" autocomplete="off">
+                    </div>
+                    <div class="field">
+                        <label for="donor-bg-filter">Blood group</label>
+                        <select id="donor-bg-filter"></select>
+                    </div>
+                    <div class="field">
+                        <label for="donor-avail-filter">Availability</label>
+                        <select id="donor-avail-filter">
+                            <option value="">All donors</option>
+                            <option value="yes">Available</option>
+                            <option value="no">Unavailable</option>
+                        </select>
+                    </div>
+                    <button type="button" id="donor-refresh" class="btn">Refresh</button>
+                </div>
+                <p id="donor-count" class="result-meta" aria-live="polite"></p>
+                <div id="donor-table"></div>
+            </section>
+
+            <!-- E. Patient directory -->
+            <section id="view-patients" class="view" aria-labelledby="h-patients" hidden>
+                <h1 id="h-patients" tabindex="-1">Patients</h1>
+                <div class="toolbar">
+                    <div class="field">
+                        <label for="patient-search">Search</label>
+                        <input id="patient-search" type="search" placeholder="Name, city, blood group or ID" autocomplete="off">
+                    </div>
+                    <button type="button" id="patient-refresh" class="btn">Refresh</button>
+                </div>
+                <p id="patient-count" class="result-meta" aria-live="polite"></p>
+                <div id="patient-table"></div>
+            </section>
+
+            <!-- F. Compatible donor search -->
+            <section id="view-search" class="view" aria-labelledby="h-search" hidden>
+                <h1 id="h-search" tabindex="-1">Find compatible donors</h1>
+                <p class="notice">The system identifies potential red blood cell donor compatibility based on predefined blood group rules. It does not provide medical approval. Actual donation requires professional medical screening and cross-matching by a qualified blood bank.</p>
+                <form id="search-form" class="toolbar" novalidate>
+                    <div class="field">
+                        <label for="search-patient">Patient</label>
+                        <select id="search-patient" aria-describedby="search-patient-error"></select>
+                        <p class="field-error" id="search-patient-error" hidden></p>
+                    </div>
+                    <div class="field">
+                        <label for="search-city">Donor city</label>
+                        <select id="search-city"></select>
+                    </div>
+                    <div class="field field-check">
+                        <label class="check">
+                            <input id="search-available" type="checkbox" checked>
+                            <span>Available donors only</span>
+                        </label>
+                    </div>
+                    <button type="submit" id="search-submit" class="btn btn-primary">Find donors</button>
+                </form>
+                <p id="search-no-patients" class="hint" hidden>No patients are registered yet. <a href="#patient-register">Register a patient</a> to start a search.</p>
+                <div id="search-results" aria-live="polite"></div>
+            </section>
+
+            <!-- G. Graph -->
+            <section id="view-graph" class="view" aria-labelledby="h-graph" hidden>
+                <h1 id="h-graph" tabindex="-1">Compatibility graph</h1>
+                <p class="lead">Each line joins a patient to an available donor with a compatible blood group. Hover or focus a vertex to highlight its connections.</p>
+                <div class="toolbar">
+                    <div class="field">
+                        <label for="graph-city">Donor city</label>
+                        <select id="graph-city"></select>
+                    </div>
+                    <button type="button" id="graph-refresh" class="btn">Refresh</button>
+                </div>
+                <div class="tabs" role="tablist" aria-label="Graph views" id="graph-tabs">
+                    <button type="button" class="tab" role="tab" id="tab-graph" aria-controls="panel-graph" aria-selected="true">Graph</button>
+                    <button type="button" class="tab" role="tab" id="tab-matrix" aria-controls="panel-matrix" aria-selected="false" tabindex="-1">Adjacency matrix</button>
+                    <button type="button" class="tab" role="tab" id="tab-degrees" aria-controls="panel-degrees" aria-selected="false" tabindex="-1">Degrees</button>
+                </div>
+                <div id="panel-graph" class="tab-panel" role="tabpanel" aria-labelledby="tab-graph"></div>
+                <div id="panel-matrix" class="tab-panel" role="tabpanel" aria-labelledby="tab-matrix" hidden></div>
+                <div id="panel-degrees" class="tab-panel" role="tabpanel" aria-labelledby="tab-degrees" hidden></div>
+            </section>
+
+            <!-- H. Maximum matching -->
+            <section id="view-matching" class="view" aria-labelledby="h-matching" hidden>
+                <h1 id="h-matching" tabindex="-1">Maximum matching</h1>
+                <p class="lead">Pairs as many patients as possible with a different compatible donor each. The result is recomputed by the backend every time you run it.</p>
+                <div class="toolbar">
+                    <div class="field">
+                        <label for="match-city">Donor city</label>
+                        <select id="match-city"></select>
+                    </div>
+                    <button type="button" id="match-run" class="btn btn-primary">Run maximum matching</button>
+                </div>
+                <div id="match-results" aria-live="polite"></div>
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <p class="notice">The system identifies potential red blood cell donor compatibility based on predefined blood group rules. It does not provide medical approval. Actual donation requires professional medical screening and cross-matching by a qualified blood bank.</p>
+        </footer>
+    </div>
+</div>
+
+<!-- Edit donor dialog (D) -->
+<dialog id="edit-dialog" class="dialog" aria-labelledby="edit-title">
+    <form id="edit-form" novalidate>
+        <h2 id="edit-title">Edit donor</h2>
+        <p class="hint" id="edit-note"></p>
+        <div class="field">
+            <label for="edit-name">Full name</label>
+            <input id="edit-name" data-field="name" type="text" autocomplete="off" aria-describedby="edit-name-error">
+            <p class="field-error" id="edit-name-error" hidden></p>
+        </div>
+        <div class="field">
+            <label for="edit-city">City</label>
+            <input id="edit-city" data-field="city" type="text" autocomplete="off" aria-describedby="edit-city-error">
+            <p class="field-error" id="edit-city-error" hidden></p>
+        </div>
+        <div class="field">
+            <label for="edit-phone">Phone</label>
+            <input id="edit-phone" data-field="phone" type="text" inputmode="tel" autocomplete="off" aria-describedby="edit-phone-error">
+            <p class="field-error" id="edit-phone-error" hidden></p>
+        </div>
+        <p class="form-status" role="alert" hidden></p>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save changes</button>
+            <button type="button" id="edit-cancel" class="btn">Cancel</button>
+        </div>
+    </form>
+</dialog>
+
+<div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
+</body>
+</html>

@@ -1,0 +1,40 @@
+# Makefile for Smart Blood Donor Finder (MSYS2 UCRT64, GCC)
+#
+# Run these from the project root:
+#   make          build sbdf.exe (the exact command from section C of the spec)
+#   make debug    build sbdf_debug.exe with no optimisation and a DEBUG macro
+#   make test     build and run tests/test_records.exe
+#   make clean    delete everything that was built
+#
+# NOTE: the indented command lines below MUST start with a TAB character, not spaces.
+
+CC      = gcc
+CFLAGS  = -std=c11 -Wall -Wextra -pedantic -g
+LIBS    = -lws2_32
+TARGET  = sbdf.exe
+SOURCES = $(wildcard backend/*.c)
+HEADERS = $(wildcard backend/*.h)
+TEST_BIN = tests/test_records.exe
+
+.PHONY: all debug test clean
+
+all: $(TARGET)
+
+# Rebuild whenever any .c or .h file changes.
+$(TARGET): $(SOURCES) $(HEADERS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES) $(LIBS)
+
+debug: $(SOURCES) $(HEADERS)
+	$(CC) $(CFLAGS) -O0 -DSBDF_DEBUG -o sbdf_debug.exe $(SOURCES) $(LIBS)
+
+# The records test is standalone: it brings its own tiny stubs for the
+# blood-group function and the StrBuf functions, so only these two backend
+# files are linked. -Ibackend lets the test find the frozen headers.
+test: $(TEST_BIN)
+	./$(TEST_BIN)
+
+$(TEST_BIN): tests/test_records.c backend/records.c backend/common.c $(HEADERS)
+	$(CC) $(CFLAGS) -Ibackend -o $(TEST_BIN) tests/test_records.c backend/records.c backend/common.c
+
+clean:
+	rm -f $(TARGET) sbdf_debug.exe $(TEST_BIN)
